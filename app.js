@@ -4,6 +4,27 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+var passport = require('passport');
+var passportJWT = require('passport-jwt');
+var ExtractJwt = passportJWT.ExtractJwt;
+var JwtStrategy = passportJWT.Strategy;
+var jwtOptions = {};
+var jwt = require('jsonwebtoken');
+
+jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+jwtOptions.secretOrKey = 'nguyenleminhtuyen';
+
+var strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
+  console.log('payload received', jwt_payload);
+  var user = getUser({ userId: jwt_payload.id });
+  if (user) {
+    next(null, user);
+  } else {
+    next(null, false);
+  }
+});
+passport.use(strategy);
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
@@ -12,6 +33,8 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+
+app.use(passport.initialize());
 
 app.use(logger('dev'));
 app.use(express.json());
