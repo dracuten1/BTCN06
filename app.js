@@ -4,19 +4,20 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+// const account = require('./services/aws-dynamoDb');
+
 var passport = require('passport');
 var passportJWT = require('passport-jwt');
 var ExtractJwt = passportJWT.ExtractJwt;
 var JwtStrategy = passportJWT.Strategy;
 var jwtOptions = {};
-var jwt = require('jsonwebtoken');
 
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = 'nguyenleminhtuyen';
 
 var strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
   console.log('payload received', jwt_payload);
-  var user = getUser({ userId: jwt_payload.id });
+  var user = jwt_payload.userId;
   if (user) {
     next(null, user);
   } else {
@@ -42,13 +43,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/me', passport.authenticate('jwt', { session: false }), indexRouter );
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+app.use('/users', usersRouter);
 
 // error handler
 app.use(function(err, req, res, next) {
